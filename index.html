@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ペンギン算数教室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+            font-family: 'Segoe UI', 'Yu Gothic', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c5282;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
+        }
+        .screen {
+            display: none;
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .screen.active {
+            display: block;
+        }
+        .penguin-container {
+            margin: 20px auto;
+        }
+        .penguin-svg {
+            width: 150px;
+            height: 180px;
+        }
+        .digit-btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            margin: 15px 0;
+            font-size: 1.5em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .digit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .problem {
+            font-size: 3em;
+            color: #2d3748;
+            margin: 30px 0;
+            font-weight: bold;
+        }
+        .answer-input {
+            font-size: 2em;
+            padding: 15px 20px;
+            width: 200px;
+            text-align: center;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            outline: none;
+        }
+        .answer-input:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(118, 75, 162, 0.3);
+        }
+        .submit-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            margin: 20px 10px;
+            font-size: 1.3em;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+        .progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+        }
+        .progress-dot {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            transition: background 0.3s;
+        }
+        .progress-dot.correct {
+            background: #48bb78;
+        }
+        .progress-dot.wrong {
+            background: #fc8181;
+        }
+        .progress-dot.current {
+            border: 3px solid #667eea;
+        }
+        .fish-count {
+            font-size: 1.8em;
+            color: #2c5282;
+            margin: 15px 0;
+        }
+        .fish-icon {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .feedback {
+            font-size: 1.5em;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+        }
+        .feedback.correct {
+            display: block;
+            background: #c6f6d5;
+            color: #276749;
+        }
+        .feedback.wrong {
+            display: block;
+            background: #fed7d7;
+            color: #c53030;
+        }
+        .result-title {
+            font-size: 2em;
+            color: #2c5282;
+            margin-bottom: 20px;
+        }
+        .result-score {
+            font-size: 3em;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        .result-message {
+            font-size: 1.3em;
+            color: #4a5568;
+            margin: 20px 0;
+        }
+        .fish-display {
+            font-size: 2em;
+            margin: 20px 0;
+        }
+        .restart-btn {
+            padding: 15px 40px;
+            font-size: 1.3em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .restart-btn:hover {
+            transform: translateY(-2px);
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes fishJump {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-50px) rotate(20deg); opacity: 0; }
+        }
+        @keyframes fishToMouth {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            50% { transform: translate(0, -30px) scale(0.8); opacity: 1; }
+            100% { transform: translate(0, -50px) scale(0); opacity: 0; }
+        }
+        @keyframes eating {
+            0% { transform: scaleY(1); }
+            25% { transform: scaleY(0.7); }
+            50% { transform: scaleY(1); }
+            75% { transform: scaleY(0.7); }
+            100% { transform: scaleY(1); }
+        }
+        .penguin-happy {
+            animation: bounce 0.5s ease-in-out;
+        }
+        .penguin-eating #beakGroup {
+            animation: eating 0.6s ease-in-out 2;
+            transform-origin: 50px 35px;
+        }
+        .fish-animation {
+            position: absolute;
+            animation: fishJump 0.8s ease-out forwards;
+        }
+        .fish-eat-animation {
+            position: absolute;
+            font-size: 2em;
+            animation: fishToMouth 0.8s ease-in-out forwards;
+            pointer-events: none;
+        }
+        .penguin-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .speech-bubble {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            padding: 10px 20px;
+            margin: 10px auto;
+            max-width: 250px;
+            position: relative;
+            font-size: 1.1em;
+            color: #4a5568;
+        }
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 10px solid transparent;
+            border-top-color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐧 ペンギン算数教室 🐧</h1>
+
+        <!-- 選択画面 -->
+        <div id="selectScreen" class="screen active">
+            <div class="penguin-container">
+                <svg class="penguin-svg" viewBox="0 0 100 120">
+                    <!-- Body -->
+                    <ellipse cx="50" cy="75" rx="35" ry="40" fill="#4a4a4a"/>
+                    <!-- White belly -->
+                    <ellipse cx="50" cy="80" rx="25" ry="32" fill="#f5f5f5"/>
+                    <!-- Head -->
+                    <circle cx="50" cy="30" r="25" fill="#2a2a2a"/>
+                    <!-- White face patches -->
+                    <ellipse cx="40" cy="32" rx="8" ry="10" fill="#f5f5f5"/>
+                    <ellipse cx="60" cy="32" rx="8" ry="10" fill="#f5f5f5"/>
+                    <!-- Yellow patches -->
+                    <ellipse cx="35" cy="25" rx="6" ry="4" fill="#ffd93d"/>
+                    <ellipse cx="65" cy="25" rx="6" ry="4" fill="#ffd93d"/>
+                    <!-- Eyes -->
+                    <circle cx="42" cy="28" r="5" fill="#000"/>
+                    <circle cx="58" cy="28" r="5" fill="#000"/>
+                    <circle cx="43" cy="27" r="2" fill="#fff"/>
+                    <circle cx="59" cy="27" r="2" fill="#fff"/>
+                    <!-- Beak -->
+                    <path d="M50 35 L44 42 L56 42 Z" fill="#ff6b35"/>
+                    <!-- Flippers -->
+                    <ellipse cx="18" cy="70" rx="10" ry="18" fill="#3a3a3a"/>
+                    <ellipse cx="82" cy="70" rx="10" ry="18" fill="#3a3a3a"/>
+                    <!-- Feet -->
+                    <ellipse cx="38" cy="112" rx="12" ry="6" fill="#ff6b35"/>
+                    <ellipse cx="62" cy="112" rx="12" ry="6" fill="#ff6b35"/>
+                </svg>
+            </div>
+            <div class="speech-bubble">
+                いっしょに足し算の練習をしよう！
+            </div>
+            <p style="font-size: 1.2em; color: #4a5568; margin: 20px 0;">
+                何桁の足し算をする？
+            </p>
+            <button class="digit-btn" onclick="startGame('1')">1桁の足し算<br><small>(1〜9) + (1〜9)</small></button>
+            <button class="digit-btn" onclick="startGame('1+2')">1桁 + 2桁の足し算<br><small>(1〜9) + (10〜20)</small></button>
+            <button class="digit-btn" onclick="startGame('2')">2桁の足し算<br><small>(10〜99) + (10〜99)</small></button>
+            <button class="digit-btn" onclick="startGame('3')">3桁の足し算<br><small>(100〜999) + (100〜999)</small></button>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div id="gameScreen" class="screen">
+            <div class="progress" id="progress"></div>
+            <div class="fish-count">
+                🐟 <span id="fishCount">0</span> ぴき
+            </div>
+            <div class="penguin-container">
+                <div class="penguin-wrapper">
+                    <svg id="gamePenguin" class="penguin-svg" viewBox="0 0 100 120">
+                        <ellipse cx="50" cy="75" rx="35" ry="40" fill="#4a4a4a"/>
+                        <ellipse cx="50" cy="80" rx="25" ry="32" fill="#f5f5f5"/>
+                        <circle cx="50" cy="30" r="25" fill="#2a2a2a"/>
+                        <ellipse cx="40" cy="32" rx="8" ry="10" fill="#f5f5f5"/>
+                        <ellipse cx="60" cy="32" rx="8" ry="10" fill="#f5f5f5"/>
+                        <ellipse cx="35" cy="25" rx="6" ry="4" fill="#ffd93d"/>
+                        <ellipse cx="65" cy="25" rx="6" ry="4" fill="#ffd93d"/>
+                        <!-- Normal eyes -->
+                        <g id="normalEyes">
+                            <circle cx="42" cy="28" r="5" fill="#000"/>
+                            <circle cx="58" cy="28" r="5" fill="#000"/>
+                            <circle cx="43" cy="27" r="2" fill="#fff"/>
+                            <circle cx="59" cy="27" r="2" fill="#fff"/>
+                        </g>
+                        <!-- Happy eyes (hidden by default) -->
+                        <g id="happyEyes" style="display:none;">
+                            <path d="M37 28 Q42 24 47 28" stroke="#000" stroke-width="3" fill="none"/>
+                            <path d="M53 28 Q58 24 63 28" stroke="#000" stroke-width="3" fill="none"/>
+                        </g>
+                        <g id="beakGroup">
+                            <path class="beak" d="M50 35 L44 42 L56 42 Z" fill="#ff6b35"/>
+                        </g>
+                        <ellipse cx="18" cy="70" rx="10" ry="18" fill="#3a3a3a"/>
+                        <ellipse cx="82" cy="70" rx="10" ry="18" fill="#3a3a3a"/>
+                        <ellipse cx="38" cy="112" rx="12" ry="6" fill="#ff6b35"/>
+                        <ellipse cx="62" cy="112" rx="12" ry="6" fill="#ff6b35"/>
+                    </svg>
+                    <div id="fishAnimation" style="display:none; position:absolute; top:20px; left:50%; transform:translateX(-50%); font-size:2em;">🐟</div>
+                </div>
+            </div>
+            <div class="speech-bubble" id="penguinSpeech">
+                がんばって！
+            </div>
+            <div class="problem" id="problem"></div>
+            <div>
+                <input type="number" class="answer-input" id="answerInput" placeholder="?" autofocus>
+            </div>
+            <div>
+                <button class="submit-btn" onclick="checkAnswer()">こたえる！</button>
+            </div>
+            <div class="feedback" id="feedback"></div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="resultScreen" class="screen">
+            <div class="result-title">🎉 おつかれさま！ 🎉</div>
+            <div class="penguin-container">
+                <svg class="penguin-svg" viewBox="0 0 100 120">
+                    <ellipse cx="50" cy="75" rx="35" ry="40" fill="#4a4a4a"/>
+                    <ellipse cx="50" cy="80" rx="25" ry="32" fill="#f5f5f5"/>
+                    <circle cx="50" cy="30" r="25" fill="#2a2a2a"/>
+                    <ellipse cx="40" cy="32" rx="8" ry="10" fill="#f5f5f5"/>
+                    <ellipse cx="60" cy="32" rx="8" ry="10" fill="#f5f5f5"/>
+                    <ellipse cx="35" cy="25" rx="6" ry="4" fill="#ffd93d"/>
+                    <ellipse cx="65" cy="25" rx="6" ry="4" fill="#ffd93d"/>
+                    <!-- Happy eyes -->
+                    <path d="M37 28 Q42 24 47 28" stroke="#000" stroke-width="3" fill="none"/>
+                    <path d="M53 28 Q58 24 63 28" stroke="#000" stroke-width="3" fill="none"/>
+                    <path d="M50 35 L44 42 L56 42 Z" fill="#ff6b35"/>
+                    <!-- Raised flippers -->
+                    <ellipse cx="15" cy="60" rx="10" ry="18" fill="#3a3a3a" transform="rotate(-20, 15, 60)"/>
+                    <ellipse cx="85" cy="60" rx="10" ry="18" fill="#3a3a3a" transform="rotate(20, 85, 60)"/>
+                    <ellipse cx="38" cy="112" rx="12" ry="6" fill="#ff6b35"/>
+                    <ellipse cx="62" cy="112" rx="12" ry="6" fill="#ff6b35"/>
+                </svg>
+            </div>
+            <div class="result-score">
+                <span id="correctCount">0</span> / 10 問正解！
+            </div>
+            <div class="fish-display">
+                🐟 <span id="totalFish">0</span> ぴきゲット！
+            </div>
+            <div class="result-message" id="resultMessage"></div>
+            <button class="restart-btn" onclick="backToSelect()">もういちどあそぶ</button>
+        </div>
+    </div>
+
+    <script>
+        let gameMode = '1';
+        let currentQuestion = 0;
+        let correctAnswers = 0;
+        let fishCount = 0;
+        let num1, num2, correctAnswer;
+        let results = [];
+        let isAnimating = false;
+
+        const speeches = {
+            start: ['がんばって！', 'できるかな？', 'かんがえてみよう！'],
+            correct: ['すごい！', 'やったね！', 'せいかい！', 'かんぺき！', 'すばらしい！', 'おいしい！🐟'],
+            wrong: ['おしい！', 'つぎはできるよ！', 'がんばって！', 'もういちど！']
+        };
+
+        function getRandomSpeech(type) {
+            const list = speeches[type];
+            return list[Math.floor(Math.random() * list.length)];
+        }
+
+        function generateNumber(type) {
+            if (type === '1') {
+                return Math.floor(Math.random() * 9) + 1;
+            } else if (type === '2') {
+                return Math.floor(Math.random() * 90) + 10;
+            } else if (type === '2small') {
+                // 10〜20
+                return Math.floor(Math.random() * 11) + 10;
+            } else {
+                return Math.floor(Math.random() * 900) + 100;
+            }
+        }
+
+        function generateProblem() {
+            if (gameMode === '1') {
+                num1 = generateNumber('1');
+                num2 = generateNumber('1');
+            } else if (gameMode === '1+2') {
+                num1 = generateNumber('1');
+                num2 = generateNumber('2small');
+            } else if (gameMode === '2') {
+                num1 = generateNumber('2');
+                num2 = generateNumber('2');
+            } else if (gameMode === '3') {
+                num1 = generateNumber('3');
+                num2 = generateNumber('3');
+            }
+            correctAnswer = num1 + num2;
+        }
+
+        function startGame(mode) {
+            gameMode = mode;
+            currentQuestion = 0;
+            correctAnswers = 0;
+            fishCount = 0;
+            results = [];
+
+            document.getElementById('selectScreen').classList.remove('active');
+            document.getElementById('gameScreen').classList.add('active');
+
+            // Reset penguin eyes
+            document.getElementById('normalEyes').style.display = 'block';
+            document.getElementById('happyEyes').style.display = 'none';
+
+            updateProgress();
+            updateFishCount();
+            nextQuestion();
+        }
+
+        function updateProgress() {
+            const progressDiv = document.getElementById('progress');
+            progressDiv.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'progress-dot';
+                if (i < results.length) {
+                    dot.classList.add(results[i] ? 'correct' : 'wrong');
+                }
+                if (i === currentQuestion) {
+                    dot.classList.add('current');
+                }
+                progressDiv.appendChild(dot);
+            }
+        }
+
+        function updateFishCount() {
+            document.getElementById('fishCount').textContent = fishCount;
+        }
+
+        function nextQuestion() {
+            if (currentQuestion >= 10) {
+                showResult();
+                return;
+            }
+
+            generateProblem();
+
+            document.getElementById('problem').textContent = `${num1} + ${num2} = ?`;
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').focus();
+            document.getElementById('feedback').className = 'feedback';
+            document.getElementById('penguinSpeech').textContent = getRandomSpeech('start');
+
+            // Reset eyes to normal
+            document.getElementById('normalEyes').style.display = 'block';
+            document.getElementById('happyEyes').style.display = 'none';
+
+            updateProgress();
+        }
+
+        function showFishEatingAnimation() {
+            const fishAnim = document.getElementById('fishAnimation');
+            const penguin = document.getElementById('gamePenguin');
+
+            // Show happy eyes
+            document.getElementById('normalEyes').style.display = 'none';
+            document.getElementById('happyEyes').style.display = 'block';
+
+            // Show fish animation
+            fishAnim.style.display = 'block';
+            fishAnim.style.opacity = '1';
+            fishAnim.style.top = '80px';
+
+            // Animate fish moving to beak
+            let startTime = null;
+            const duration = 600;
+            const startTop = 80;
+            const endTop = 45;
+
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+
+                // Ease out
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+                fishAnim.style.top = (startTop - (startTop - endTop) * easeProgress) + 'px';
+                fishAnim.style.transform = `translateX(-50%) scale(${1 - easeProgress * 0.5}) rotate(${easeProgress * 20}deg)`;
+                fishAnim.style.opacity = 1 - easeProgress * 0.3;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Fish eaten - hide and show munching
+                    fishAnim.style.display = 'none';
+
+                    // Add eating animation to beak
+                    penguin.classList.add('penguin-eating');
+
+                    setTimeout(() => {
+                        penguin.classList.remove('penguin-eating');
+                    }, 600);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function checkAnswer() {
+            if (isAnimating) return;
+
+            const input = document.getElementById('answerInput');
+            const userAnswer = parseInt(input.value);
+            const feedback = document.getElementById('feedback');
+            const penguin = document.getElementById('gamePenguin');
+            const speech = document.getElementById('penguinSpeech');
+
+            if (isNaN(userAnswer)) {
+                input.focus();
+                return;
+            }
+
+            isAnimating = true;
+
+            if (userAnswer === correctAnswer) {
+                // Correct!
+                results.push(true);
+                correctAnswers++;
+                fishCount++;
+                updateFishCount();
+
+                feedback.textContent = `⭕ せいかい！ ${num1} + ${num2} = ${correctAnswer}`;
+                feedback.className = 'feedback correct';
+                speech.textContent = getRandomSpeech('correct');
+
+                // Show fish eating animation
+                showFishEatingAnimation();
+
+                penguin.classList.add('penguin-happy');
+                setTimeout(() => penguin.classList.remove('penguin-happy'), 500);
+            } else {
+                // Wrong
+                results.push(false);
+
+                feedback.textContent = `❌ ざんねん... こたえは ${correctAnswer} だよ`;
+                feedback.className = 'feedback wrong';
+                speech.textContent = getRandomSpeech('wrong');
+            }
+
+            currentQuestion++;
+            updateProgress();
+
+            setTimeout(() => {
+                isAnimating = false;
+                nextQuestion();
+            }, 1800);
+        }
+
+        function showResult() {
+            document.getElementById('gameScreen').classList.remove('active');
+            document.getElementById('resultScreen').classList.add('active');
+
+            document.getElementById('correctCount').textContent = correctAnswers;
+            document.getElementById('totalFish').textContent = fishCount;
+
+            let message = '';
+            if (correctAnswers === 10) {
+                message = '🏆 パーフェクト！ すごすぎる！ 🏆';
+            } else if (correctAnswers >= 8) {
+                message = '⭐ とってもよくできました！ ⭐';
+            } else if (correctAnswers >= 6) {
+                message = '👍 よくがんばりました！';
+            } else if (correctAnswers >= 4) {
+                message = '💪 もうすこしれんしゅうしよう！';
+            } else {
+                message = '📚 いっしょにがんばろう！';
+            }
+            document.getElementById('resultMessage').textContent = message;
+        }
+
+        function backToSelect() {
+            document.getElementById('resultScreen').classList.remove('active');
+            document.getElementById('selectScreen').classList.add('active');
+        }
+
+        // Enter key to submit
+        document.getElementById('answerInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+    </script>
+</body>
+</html>
