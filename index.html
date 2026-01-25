@@ -277,15 +277,14 @@
                 </svg>
             </div>
             <div class="speech-bubble">
-                いっしょに足し算の練習をしよう！
+                いっしょに算数の練習をしよう！
             </div>
             <p style="font-size: 1.2em; color: #4a5568; margin: 20px 0;">
-                何桁の足し算をする？
+                どの問題をする？
             </p>
-            <button class="digit-btn" onclick="startGame('1')">1桁の足し算<br><small>(1〜9) + (1〜9)</small></button>
             <button class="digit-btn" onclick="startGame('1+2')">1桁 + 2桁の足し算<br><small>(1〜9) + (10〜20)</small></button>
-            <button class="digit-btn" onclick="startGame('2')">2桁の足し算<br><small>(10〜99) + (10〜99)</small></button>
-            <button class="digit-btn" onclick="startGame('3')">3桁の足し算<br><small>(100〜999) + (100〜999)</small></button>
+            <button class="digit-btn" onclick="startGame('2-1')">2桁 − 1桁の引き算<br><small>(10〜20) − (1〜9)</small></button>
+            <button class="digit-btn" onclick="startGame('2small')">2桁の足し算<br><small>(10〜20) + (10〜20)</small></button>
         </div>
 
         <!-- ゲーム画面 -->
@@ -408,20 +407,28 @@
         }
 
         function generateProblem() {
-            if (gameMode === '1') {
-                num1 = generateNumber('1');
-                num2 = generateNumber('1');
-            } else if (gameMode === '1+2') {
+            if (gameMode === '1+2') {
+                // 1桁 + 2桁（10-20）
                 num1 = generateNumber('1');
                 num2 = generateNumber('2small');
-            } else if (gameMode === '2') {
-                num1 = generateNumber('2');
-                num2 = generateNumber('2');
-            } else if (gameMode === '3') {
-                num1 = generateNumber('3');
-                num2 = generateNumber('3');
+                correctAnswer = num1 + num2;
+            } else if (gameMode === '2-1') {
+                // 2桁（10-20）- 1桁（マイナスにならないように）
+                num1 = generateNumber('2small');
+                num2 = generateNumber('1');
+                // 結果がマイナスにならないように調整
+                if (num1 < num2) {
+                    // num1とnum2を入れ替え、または再生成
+                    num1 = Math.max(num1, num2 + 1);
+                    if (num1 > 20) num1 = 20;
+                }
+                correctAnswer = num1 - num2;
+            } else if (gameMode === '2small') {
+                // 2桁（10-20）+ 2桁（10-20）
+                num1 = generateNumber('2small');
+                num2 = generateNumber('2small');
+                correctAnswer = num1 + num2;
             }
-            correctAnswer = num1 + num2;
         }
 
         function startGame(mode) {
@@ -471,7 +478,8 @@
 
             generateProblem();
 
-            document.getElementById('problem').textContent = `${num1} + ${num2} = ?`;
+            const operator = gameMode === '2-1' ? '−' : '+';
+            document.getElementById('problem').textContent = `${num1} ${operator} ${num2} = ?`;
             document.getElementById('answerInput').value = '';
             document.getElementById('answerInput').focus();
             document.getElementById('feedback').className = 'feedback';
@@ -555,7 +563,8 @@
                 fishCount++;
                 updateFishCount();
 
-                feedback.textContent = `⭕ せいかい！ ${num1} + ${num2} = ${correctAnswer}`;
+                const op = gameMode === '2-1' ? '−' : '+';
+                feedback.textContent = `⭕ せいかい！ ${num1} ${op} ${num2} = ${correctAnswer}`;
                 feedback.className = 'feedback correct';
                 speech.textContent = getRandomSpeech('correct');
 
