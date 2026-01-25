@@ -239,6 +239,45 @@
             border: 10px solid transparent;
             border-top-color: white;
         }
+        /* Keypad styles */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 280px;
+            margin: 20px auto;
+        }
+        .key-btn {
+            padding: 18px;
+            font-size: 1.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+            color: #2d3748;
+            border: 2px solid #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .key-btn:hover {
+            background: linear-gradient(135deg, #e8e8e8, #d8d8d8);
+        }
+        .key-btn:active {
+            transform: scale(0.95);
+            background: linear-gradient(135deg, #d0d0d0, #c0c0c0);
+        }
+        .key-btn.delete {
+            background: linear-gradient(135deg, #fc8181, #f56565);
+            color: white;
+            border-color: #e53e3e;
+        }
+        .key-btn.delete:hover {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+        }
+        .key-btn.zero {
+            grid-column: span 2;
+        }
     </style>
 </head>
 <body>
@@ -331,7 +370,20 @@
             </div>
             <div class="problem" id="problem"></div>
             <div>
-                <input type="number" class="answer-input" id="answerInput" placeholder="?" autofocus>
+                <input type="text" class="answer-input" id="answerInput" placeholder="?" readonly>
+            </div>
+            <div class="keypad">
+                <button class="key-btn" onclick="pressKey('1')">1</button>
+                <button class="key-btn" onclick="pressKey('2')">2</button>
+                <button class="key-btn" onclick="pressKey('3')">3</button>
+                <button class="key-btn" onclick="pressKey('4')">4</button>
+                <button class="key-btn" onclick="pressKey('5')">5</button>
+                <button class="key-btn" onclick="pressKey('6')">6</button>
+                <button class="key-btn" onclick="pressKey('7')">7</button>
+                <button class="key-btn" onclick="pressKey('8')">8</button>
+                <button class="key-btn" onclick="pressKey('9')">9</button>
+                <button class="key-btn zero" onclick="pressKey('0')">0</button>
+                <button class="key-btn delete" onclick="pressDelete()">←</button>
             </div>
             <div>
                 <button class="submit-btn" onclick="checkAnswer()">こたえる！</button>
@@ -618,10 +670,31 @@
             document.getElementById('selectScreen').classList.add('active');
         }
 
-        // Enter key to submit
-        document.getElementById('answerInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                checkAnswer();
+        // Keypad functions
+        function pressKey(num) {
+            if (isAnimating) return;
+            const input = document.getElementById('answerInput');
+            if (input.value.length < 4) { // Max 4 digits
+                input.value += num;
+            }
+        }
+
+        function pressDelete() {
+            if (isAnimating) return;
+            const input = document.getElementById('answerInput');
+            input.value = input.value.slice(0, -1);
+        }
+
+        // Enter key to submit (for keyboard users)
+        document.addEventListener('keydown', function(e) {
+            if (document.getElementById('gameScreen').classList.contains('active')) {
+                if (e.key >= '0' && e.key <= '9') {
+                    pressKey(e.key);
+                } else if (e.key === 'Backspace') {
+                    pressDelete();
+                } else if (e.key === 'Enter') {
+                    checkAnswer();
+                }
             }
         });
     </script>
