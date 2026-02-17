@@ -322,7 +322,8 @@
                 どの問題をする？
             </p>
             <button class="digit-btn" onclick="startGame('1+2')">1桁 + 2桁の足し算<br><small>(1〜9) + (10〜20)</small></button>
-            <button class="digit-btn" onclick="startGame('2-1')">2桁 − 1桁の引き算<br><small>(10〜20) − (1〜9)</small></button>
+            <button class="digit-btn" onclick="startGame('2-1')">2桁 − 1桁の引き算<br><small>(10〜30) − (1〜9) くりさがり</small></button>
+            <button class="digit-btn" onclick="startGame('2-2sub')">2桁 − 2桁の引き算<br><small>(10〜20) − (10〜20)</small></button>
             <button class="digit-btn" onclick="startGame('2small')">2桁の足し算<br><small>(10〜20) + (10〜20)</small></button>
         </div>
 
@@ -453,6 +454,13 @@
             } else if (type === '2small') {
                 // 10〜20
                 return Math.floor(Math.random() * 11) + 10;
+            } else if (type === '2medium') {
+                // 10〜30（一の位が9の数は除外：繰り下がり用）
+                let n;
+                do {
+                    n = Math.floor(Math.random() * 21) + 10;
+                } while (n % 10 === 9);
+                return n;
             } else {
                 return Math.floor(Math.random() * 900) + 100;
             }
@@ -465,14 +473,20 @@
                 num2 = generateNumber('2small');
                 correctAnswer = num1 + num2;
             } else if (gameMode === '2-1') {
-                // 2桁（10-20）- 1桁（マイナスにならないように）
+                // 2桁（10-30）- 1桁、常に繰り下がりが発生
+                num1 = generateNumber('2medium');
+                const onesDigit = num1 % 10;
+                // num2 は (onesDigit+1)〜9 の範囲 → 一の位 < num2 で繰り下がり確定
+                num2 = Math.floor(Math.random() * (9 - onesDigit)) + onesDigit + 1;
+                correctAnswer = num1 - num2;
+            } else if (gameMode === '2-2sub') {
+                // 2桁（10-20）− 2桁（10-20）、答え ≥ 0
                 num1 = generateNumber('2small');
-                num2 = generateNumber('1');
-                // 結果がマイナスにならないように調整
+                num2 = generateNumber('2small');
                 if (num1 < num2) {
-                    // num1とnum2を入れ替え、または再生成
-                    num1 = Math.max(num1, num2 + 1);
-                    if (num1 > 20) num1 = 20;
+                    const tmp = num1;
+                    num1 = num2;
+                    num2 = tmp;
                 }
                 correctAnswer = num1 - num2;
             } else if (gameMode === '2small') {
@@ -530,7 +544,7 @@
 
             generateProblem();
 
-            const operator = gameMode === '2-1' ? '−' : '+';
+            const operator = (gameMode === '2-1' || gameMode === '2-2sub') ? '−' : '+';
             document.getElementById('problem').textContent = `${num1} ${operator} ${num2} = ?`;
             document.getElementById('answerInput').value = '';
             document.getElementById('answerInput').focus();
@@ -615,7 +629,7 @@
                 fishCount++;
                 updateFishCount();
 
-                const op = gameMode === '2-1' ? '−' : '+';
+                const op = (gameMode === '2-1' || gameMode === '2-2sub') ? '−' : '+';
                 feedback.textContent = `⭕ せいかい！ ${num1} ${op} ${num2} = ${correctAnswer}`;
                 feedback.className = 'feedback correct';
                 speech.textContent = getRandomSpeech('correct');
